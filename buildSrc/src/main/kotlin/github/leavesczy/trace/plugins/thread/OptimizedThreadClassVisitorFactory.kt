@@ -131,7 +131,14 @@ private class OptimizedThreadClassVisitor(
                 //为调用 Thread 构造函数的指令多插入一个 String 类型的方法入参参数声明
                 node.insertArgument(String::class.java)
                 //将 ClassName 作为构造参数传给 OptimizedThread
-                instructions.insertBefore(node, LdcInsnNode(simpleClassName))
+//                instructions.insertBefore(node, LdcInsnNode(simpleClassName))
+
+
+                //结果：null-OptimizedThreadActivity#onCreate$lambda$7(Lgithub/leavesczy/trace/thread/OptimizedThreadActivity;Landroid/view/View;)V-2
+                // 2. 拼接要传入的方法信息。这里示例为 "className#methodName(methodDesc)" 的形式。
+                val fullMethodInfo = "$simpleClassName#${methodNode.name}${methodNode.desc}"
+                //将 ClassName 作为构造参数传给 OptimizedThread
+                instructions.insertBefore(node, LdcInsnNode(fullMethodInfo))
                 break
             }
         }

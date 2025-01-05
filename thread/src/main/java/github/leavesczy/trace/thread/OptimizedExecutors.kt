@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * @Desc:
  */
 object OptimizedExecutors {
+    private val TAG = "OptimizedExecutors"
 
     private const val defaultThreadKeepAliveTime = 5000L
 
