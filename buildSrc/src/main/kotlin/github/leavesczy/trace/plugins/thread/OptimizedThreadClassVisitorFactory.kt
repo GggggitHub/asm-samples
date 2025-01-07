@@ -114,7 +114,13 @@ private class OptimizedThreadClassVisitor(
             //为调用 newFixedThreadPool 等方法的指令多插入一个 String 类型的方法入参参数声明
             methodInsnNode.insertArgument(String::class.java)
             //将 className 作为上述 String 参数的入参参数
-            methodNode.instructions.insertBefore(methodInsnNode, LdcInsnNode(simpleClassName))
+//            methodNode.instructions.insertBefore(methodInsnNode, LdcInsnNode(simpleClassName))
+
+
+            // 2. 拼接要传入的方法信息。这里示例为 "className#methodName(methodDesc)" 的形式。
+            val fullMethodInfo = "$simpleClassName#${methodNode.name}${methodNode.desc}"
+            //将 ClassName 作为构造参数传给 OptimizedThread
+            methodNode.instructions.insertBefore(methodInsnNode, LdcInsnNode(fullMethodInfo))
         }
     }
 

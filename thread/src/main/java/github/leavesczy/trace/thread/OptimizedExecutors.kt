@@ -1,5 +1,6 @@
 package github.leavesczy.trace.thread
 
+import android.util.Log
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.LinkedBlockingQueue
@@ -23,7 +24,7 @@ object OptimizedExecutors {
 
     @JvmStatic
     fun newFixedThreadPool(nThreads: Int, className: String): ExecutorService {
-        return newFixedThreadPool(nThreads, null, className)
+        return newFixedThreadPool(nThreads, null, className+"-newFixedThreadPool"+"-"+nThreads)
     }
 
     @JvmStatic
@@ -42,7 +43,7 @@ object OptimizedExecutors {
 
     @JvmStatic
     fun newSingleThreadExecutor(className: String): ExecutorService {
-        return newSingleThreadExecutor(null, className)
+        return newSingleThreadExecutor(null, className+"-newSingleThreadExecutor")
     }
 
     @JvmStatic
@@ -60,7 +61,7 @@ object OptimizedExecutors {
 
     @JvmStatic
     fun newCachedThreadPool(className: String): ExecutorService {
-        return newCachedThreadPool(null, className)
+        return newCachedThreadPool(null, className+"-newCachedThreadPool")
     }
 
     @JvmStatic
@@ -75,7 +76,7 @@ object OptimizedExecutors {
 
     @JvmStatic
     fun newSingleThreadScheduledExecutor(className: String): ScheduledExecutorService {
-        return newSingleThreadScheduledExecutor(null, className)
+        return newSingleThreadScheduledExecutor(null, className+"-newSingleThreadScheduledExecutor")
     }
 
     @JvmStatic
@@ -88,7 +89,7 @@ object OptimizedExecutors {
 
     @JvmStatic
     fun newScheduledThreadPool(corePoolSize: Int, className: String): ScheduledExecutorService {
-        return newScheduledThreadPool(corePoolSize, null, className)
+        return newScheduledThreadPool(corePoolSize, null, className+"-newScheduledThreadPool"+"-"+corePoolSize)
     }
 
     @JvmStatic
@@ -100,6 +101,24 @@ object OptimizedExecutors {
         return getOptimizedScheduledExecutorService(corePoolSize, threadFactory, className)
     }
 
+    val isOnlyOnePool = false
+    var executorMy :ThreadPoolExecutor
+    var executorPoolMy :ScheduledThreadPoolExecutor
+    init {
+        executorMy = ThreadPoolExecutor(
+            5, 60,
+            60L, TimeUnit.SECONDS,
+            LinkedBlockingQueue(),
+            NamedThreadFactory(null, "myThreadFactory")
+        )
+        executorMy.setKeepAliveTime(defaultThreadKeepAliveTime, TimeUnit.MILLISECONDS)
+        executorMy.allowCoreThreadTimeOut(true)
+
+        executorPoolMy = ScheduledThreadPoolExecutor(
+            3,
+            NamedThreadFactory(null, "myThreadFactoryPool")
+        )
+    }
     private fun getOptimizedExecutorService(
         corePoolSize: Int,
         maximumPoolSize: Int,
@@ -109,6 +128,11 @@ object OptimizedExecutors {
         threadFactory: ThreadFactory? = null,
         className: String,
     ): ExecutorService {
+
+        if (isOnlyOnePool){
+            Log.e(TAG, "getOptimizedExecutorService:only one return executorMy...className:$className");
+            return executorMy
+        }
         val executor = ThreadPoolExecutor(
             corePoolSize, maximumPoolSize,
             keepAliveTime, unit,
@@ -125,6 +149,11 @@ object OptimizedExecutors {
         threadFactory: ThreadFactory? = null,
         className: String
     ): ScheduledExecutorService {
+
+        if (isOnlyOnePool){
+            Log.e(TAG, "getOptimizedScheduledExecutorService:only one return executorPoolMy...className:$className");
+            return executorPoolMy
+        }
         val executor = ScheduledThreadPoolExecutor(
             threadSize,
             NamedThreadFactory(threadFactory, className)
@@ -142,6 +171,7 @@ object OptimizedExecutors {
         private val threadId = AtomicInteger(0)
 
         override fun newThread(runnable: Runnable): Thread {
+            Log.e(TAG, "newThread: name: $className");
             val originThread = threadFactory?.newThread(runnable)
             val threadName =
                 className + "-" + threadId.getAndIncrement() + if (originThread != null) {
